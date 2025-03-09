@@ -46,6 +46,11 @@
         </fieldset>
       </form>
     </div>
+    <div id="dialog-confirm" title="Confirm">
+      <form id="form-confirm">
+        <p id="dialog-confirm-message"></p>
+      </form>
+    </div>
   <style>
 * {
   box-sizing: border-box;
@@ -104,17 +109,18 @@ nav>div>a.active {
   display: flex;
   flex-direction: row;
 }
+
 .edit {
   display: block;
   width: 16px;
   height: 16px;
-  background-color: green;
+//  background-color: green;
 }
 .del {
   display: block;
   width: 16px;
   height: 16px;
-  background-color: red;
+//  background-color: red;
 }
 </style>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -137,8 +143,8 @@ nav>div>a.active {
         <td>{{ name }}</td>
         <td>{{ email }}</td>
         <td class="buts users">
-            <a href="#" title="Edit" class="edit" data-id="{{id}}"></a>
-            <a href="#" title="Delete" class="del" data-id="{{id}}"></a>
+          <span class="ui-icon ui-icon-pencil"><a href="#" title="Edit" class="edit" data-id="{{id}}"></a></span>
+          <span class="ui-icon ui-icon-close"><a href="#" title="Delete" class="del" data-id="{{id}}" data-name="{{name}}"></a></span>
         </td>
       </tr>
      {{/each}}
@@ -150,7 +156,6 @@ nav>div>a.active {
   <form id="form-users-details">
   <p>User name: <b>{{ name }}</b></p>
   <table class="table table-striped">
-    <input type="hidden" name="user_id" value="{{ id }}">
     <tbody>
       <tr><td>Name:</td><td><input type="text" name="name" data-init="{{ name }}" value="{{ name }}"></td></tr>
       <tr><td>Email:</td><td><input type="email" name="email" data-init="{{ email }}" value="{{ email }}"</td></tr>
@@ -214,8 +219,8 @@ nav>div>a.active {
       <tr>
         <td>{{ this }}</td>
         <td class="buts roles">
-            <a href="#" title="Edit" class="edit" data-name="{{this}}"></a>
-            <a href="#" title="Delete" class="del" data-name="{{this}}"></a>
+          <span class="ui-icon ui-icon-pencil"><a href="#" title="Edit" class="edit" data-name="{{this}}"></a></span>
+          <span class="ui-icon ui-icon-close"><a href="#" title="Delete" class="del" data-name="{{this}}"></a></span>
         </td>
       </tr>
      {{/each}}
@@ -279,7 +284,7 @@ $( document ).ready(function() {
 
     $("nav>div>a.active").trigger("click");
 
-    $("#dialog-login").dialog({
+    $("#dialog-login,#dialog-confirm").dialog({
       autoOpen : false,
       modal : true,
       show : "blind",
@@ -404,6 +409,41 @@ $( document ).ready(function() {
     $("body").on("click", ".roles .edit", function(e) {
       show_roles_details($(this).data("name"));
     });
+
+    $("body").on("click", ".users .del", function(e) {
+      let user_id = $(this).data("id");
+      dialog_confirm("Are you shure you want to delete user <b>" + $(this).data("name") + "</b>?",
+        function() {
+          send("delete", "/api/users/" + user_id, null,
+            function() {
+              close_dialog_confirm();
+              show_users();
+            },
+            function(jqXHR, textStatus, errorThrown) {
+              close_dialog_confirm();
+              alert(errorThrown);
+            }
+          );
+        });
+    });
+
+    $("body").on("click", ".roles .del", function(e) {
+      let role_name = $(this).data("name");
+      dialog_confirm("Are you shure you want to delete role <b>" + role_name + "</b>?",
+        function() {
+          send("delete", "/api/roles/" + role_name, null,
+            function() {
+              close_dialog_confirm();
+              show_roles();
+            },
+            function(jqXHR, textStatus, errorThrown) {
+              close_dialog_confirm();
+              alert(errorThrown);
+            }
+          );
+        });
+    });
+
   });
 });
 
@@ -455,6 +495,35 @@ function show_roles_details(name) {
     function(e) {
 
     });
+}
+
+function dialog_confirm(message, yes, no) {
+  $("#dialog-confirm-message").html(message);
+  $("#dialog-confirm").dialog({
+    buttons: [{
+      text: "Yes",
+      icon: "ui-icon-check",
+      click: function() {
+        if (yes) {
+          yes();
+        }
+      }
+    }, {
+      text: "No",
+      icon: "ui-icon-close",
+      click: function() {
+        if (no) {
+          no();
+        } else {
+          $(this).dialog("close");
+        }
+      }
+    }]
+  }).dialog("open");
+}
+
+function close_dialog_confirm() {
+  $("#dialog-confirm").dialog("close");
 }
 
 function send(method, url, obj, success, fail) {
