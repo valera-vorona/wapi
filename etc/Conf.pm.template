@@ -1,0 +1,25 @@
+package Conf;
+
+use strict;
+use Exporter;
+
+our (@EXPORT, @ISA);
+
+@ISA         = qw(Exporter);
+@EXPORT      = qw(conf);
+
+my $vars = {
+  dbhost	=> '{{ dbhost }}',
+  dbport	=> {{ dbport }},
+  dbname	=> '{{ dbname }}',
+  dbuser	=> '{{ dbuser }}',
+  dbpasswd	=> '{{ dbpasswd }}',
+  
+  db_function_path => '{{ path }}/db/functions',
+};
+
+sub conf {
+  return $vars;
+}
+
+1;

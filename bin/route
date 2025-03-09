@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+
+use strict;
+use CGI;
+use DBI;
+use Encode;
+#use utf8;
+use JSON;
+use FindBin;
+use lib "$FindBin::Bin/../etc";
+use Conf;
+
+my $conf = Conf::conf();
+my $q = CGI->new;
+my $rv;                                     # returned json
+my %params = $q->Vars;
+
+while (my ($k, $v) = each(%params)) {
+    my @values = split('\0', $v);
+    if (@values > 1) {
+        $params{$k} = \@values;
+    }
+}
+
+my $params = encode_json(\%params);
+my %headers = map { $_ => $q->http($_) } $q->http;
+my $headers = encode_json(\%headers);
+
+# Getting data from database
+
+eval {
+    my $dbh = DBI->connect("dbi:Pg:dbname=$conf->{dbname};host=$conf->{dbhost};port=$conf->{dbport}",
+        $conf->{dbuser}, $conf->{dbpasswd}, {
+        AutoCommit => 0,
+        RaiseError => 1,
+        pg_server_prepare => 1,
+    });
+
+    my $sth = $dbh->prepare_cached(q{SELECT web.route($1, $2, $3, $4);});
+    $sth->execute($ENV{REQUEST_METHOD}, $q->url, $params, $headers);
+    my @data = $sth->fetchrow_array;
+    $rv = decode_json(encode('utf8', $data[0])) if @data;
+    $sth->finish;
+    $dbh->commit;
+    $dbh->disconnect;
+};
+
+# Printing the response
+print "Content-type:application/json; charset=utf-8\n"; 
+if ($rv && ref $rv eq 'HASH' && exists $rv->{status}) {
+    print "Status: $rv->{status}\n\n";
+    print encide_json($rv->{content}) if exists $rv->{content};
+} else {
+    print "\n";
+    print encode_json($rv);
+}
+
+die $@ if $@;
+

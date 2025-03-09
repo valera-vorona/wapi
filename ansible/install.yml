@@ -1,0 +1,31 @@
+- name: Install project
+  hosts: localhost
+  tasks:
+    - name: Find mod install files
+      ansible.builtin.find:
+        paths: "{{ path }}/mods"
+        patterns: 'install.yml'
+        recurse: true
+        depth: 2
+      register: out
+
+    - name: Include mods
+      ansible.builtin.include_tasks:
+        file: "{{ item.path }}"
+      loop: "{{ out.files }}"
+
+    - name: Make nginx configuration file
+      ansible.builtin.template:
+        src: "{{ path }}/etc/nginx.conf.template"
+        dest: "{{ path }}/etc/{{ project_name }}.nginx.conf"
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+        mode: "644"
+
+    - name: Make perl configuration file
+      ansible.builtin.template:
+        src: "{{ path }}/etc/Conf.pm.template"
+        dest: "{{ path }}/etc/Conf.pm"
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+        mode: "644"

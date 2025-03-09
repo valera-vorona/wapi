@@ -1,0 +1,23 @@
+# Fill in all the above self-explanatory variables
+# and copy this file to "all" in the same directory
+
+# web
+owner:        www-data
+group:        www-data
+project_name: first
+host_name:    first.com
+port_:        8080
+
+# For experts (keep it as is)
+apis:
+  - api
+
+# Project path
+path:         /opt/www/first
+
+# db
+dbhost:       localhost
+dbport:       5432 
+dbname:       test
+dbuser:       test
+dbpasswd:     test

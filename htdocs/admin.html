@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Admin</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+  </head>
+  <body>
+    <div id="wrapper">
+      <header>
+        header
+      </header>
+      <div id="container">
+        <aside>
+          <nav>
+            <div>
+              <a id="menu-users" class="active" href="#">Users</a>
+            </div>
+            <div>
+              <a id="menu-functions" href="#">Functions</a>
+            </div>
+            <div>
+              <a id="menu-roles" href="#">Roles</a>
+            </div>
+          </nav>
+        </aside>
+        <main>
+          content
+        </main>
+      </div>
+      <footer>
+        footer
+      </footer>
+    </div>
+    <div id="dialog-login" title="Login">
+      <form id="form-login" method="get" action="/connection/login">
+        <fieldset id="form-login-message" style="display: none"></label>
+          <label></label>
+        </fieldset>
+        <fieldset>
+          <label for="login">Name</label>
+	  <input type="text" name="login">
+          <label for="password">Password</label>
+	  <input type="password" name="password">
+          <input type="submit">
+        </fieldset>
+      </form>
+    </div>
+  <style>
+* {
+  box-sizing: border-box;
+}
+
+#wrapper {
+  width: 1200px;
+  margin: 30px auto;
+}
+header {
+  height: 20px;
+  padding: 20px;
+}
+#container {
+  display: flex;
+}
+main {
+  width: 780px;
+  height: 700px;
+  padding: 20px;
+  border: 1px solid black;
+}
+aside {
+  width: 200px;
+  margin-right: 20px;
+  padding: 20px;
+  border: 1px solid black;
+}
+footer {
+  height: 20px;
+  padding: 20px;
+}
+nav {
+  display: flex;
+  flex-direction: column;
+}
+nav>div {
+  height: 50px;
+  text-align: center;
+}
+nav>div>a {
+  display: block;
+  color: black;
+  padding: 8px 16px;
+  text-decoration: none;
+}
+nav>div>a:hover {
+  background-color: #555;
+  color: white;
+}
+nav>div>a.active {
+  background-color: #04AA6D;
+  color: white;
+}
+.buts {
+  display: flex;
+  flex-direction: row;
+}
+.edit {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: green;
+}
+.del {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: red;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js" integrity="sha512-3j3VU6WC5rPQB4Ld1jnLV7Kd5xr+cq9avvhwqzbH/taCRNURoeEpoPBK9pDyeukwSxwRPJ8fDgvYXd6SkaZ2TA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js" integrity="sha256-AlTido85uXPlSyyaZNsjJXeCs07eSv3r43kyCVc8ChI=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.8/handlebars.min.js" integrity="sha512-E1dSFxg+wsfJ4HKjutk/WaCzK7S2wv1POn1RRPGh8ZK+ag9l244Vqxji3r6wgz9YBf6+vhQEYJZpSjqWFPg9gg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script id="tmpl-users" type="text/x-handlebars-template">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Email</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {{#each this}}
+      <tr>
+        <td>{{ name }}</td>
+        <td>{{ email }}</td>
+        <td class="buts">
+            <a href="#" title="Edit" class="edit" data-id="{{id}}"></a>
+            <a href="#" title="Delete" class="del" data-id="{{id}}"></a>
+        </td>
+      </tr>
+     {{/each}}
+    </tbody>
+  </table>
+</script>
+
+<script id="tmpl-users-details" type="text/x-handlebars-template">
+  <table class="table table-striped">
+    <tbody>
+      <tr><td>Name:</td><td>{{ name }}</td></tr>
+      <tr><td>Email:</td><td>{{ email }}</td></tr>
+    </tbody>
+  </table>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Granted</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{#each roles}}
+      <tr>
+        <td>{{ name }}</td>
+        <td>{{ granted }}</td>
+      </tr>
+    {{/each}}
+    </tbody>
+  </table>
+</script>
+
+<script id="tmpl-functions" type="text/x-handlebars-template">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {{#each this}}
+      <tr>
+        <td>{{ this }}</td>
+        <td>
+          <a href="#" class="class-thumb" data-id="{{id}}">
+            <img src="{{thumb_src}}">
+          </a>
+        </td>
+      </tr>
+     {{/each}}
+    </tbody>
+  </table>
+</script>
+
+<script id="tmpl-roles" type="text/x-handlebars-template">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {{#each this}}
+      <tr>
+        <td>{{ this }}</td>
+        <td>
+          <a href="#" class="class-thumb" data-id="{{id}}">
+            <img src="{{thumb_src}}">
+          </a>
+        </td>
+      </tr>
+     {{/each}}
+    </tbody>
+  </table>
+</script>
+
+<script>
+let tmpls = {};
+
+$( document ).ready(function() {
+
+  $(function() {
+    tmpls = {
+      users:         Handlebars.compile($("#tmpl-users").html()),
+      users_details: Handlebars.compile($("#tmpl-users-details").html()),
+      functions:     Handlebars.compile($("#tmpl-functions").html()),
+      roles:         Handlebars.compile($("#tmpl-roles").html()),
+    };
+
+    $("nav>div>a").on("click", function(e) {
+      e.preventDefault();
+      $("nav>div>a").removeClass("active");
+      $(this).addClass("active");
+    });
+
+    $("#menu-users").on("click", show_users);
+    $("#menu-functions").on("click", show_functions);
+    $("#menu-roles").on("click", show_roles);
+
+    $("nav>div>a.active").trigger("click");
+
+    $("#dialog-login").dialog({
+      autoOpen : false,
+      modal : true,
+      show : "blind",
+      hide : "blind"
+    });
+
+    $("#form-login").on("submit", function(e) {
+      e.preventDefault();
+      send("post", "/connection/login", $(this).serialize(),
+      function(data) {
+        $("#form-login-message").hide().children("label").text("");
+        $.cookie('access_token', data.access_token, { expires: 12/24 });
+        $("#dialog-login").dialog("close");
+          if ($("#dialog-login").data("failed")) {
+            console.log($("#dialog-login").data("failed"));
+            const data = $("#dialog-login").data("failed");
+            send(
+              data.method,
+              data.url,
+              data.obj,
+              data.success,
+              data.fail,
+            );
+
+            $("#dialog-login").data("failed", undefined);
+          }
+      },
+      function(e) {
+        $("#form-login-message").show().children("label").text(e.statusText);
+      });
+    });
+
+    $("body").on("click", ".edit", function(e) {
+      show_users_details($(this).data("id"));
+    });
+  });
+});
+
+function show_users(data) {
+  send("get", "/api/users", null,
+    function(data) {
+      $("main").html(tmpls.users(data));
+    },
+    function(e) {
+
+    }); 
+}
+
+function show_users_details(id) {
+  send("get", "/api/users/" + id + "/details", null,
+    function(data) {
+      $("main").html(tmpls.users_details(data));
+    },
+    function(e) {
+
+    });
+}
+
+function show_functions(data) {
+  send("get", "/api/functions", null,
+    function(data) {
+      $("main").html(tmpls.functions(data));
+    },
+    function(e) {
+
+    }); 
+}
+
+function show_roles(data) {
+  send("get", "/api/roles", null,
+    function(data) {
+      $("main").html(tmpls.roles(data));
+    },
+    function(e) {
+
+    }); 
+}
+
+function send(method, url, obj, success, fail) {
+  var headers = {};
+  if (!/^\/connection/.test(url)) {
+    headers["Authorization"] = "Bearer " + $.cookie("access_token");
+  }
+
+  $.ajax(url, {
+    method: method,
+    headers: headers,
+    data: obj
+  }).done(function(data, textStatus, jqXHRdata) {
+    if (success) success(data, textStatus, jqXHRdata);
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    if (jqXHR.status === 401 && (
+      jqXHR.statusText == 'No access token provided' ||
+      jqXHR.statusText == 'Unknown access token' ||
+      jqXHR.statusText == 'Session expired')) {
+        $("#dialog-login").data(
+          "failed", { method: method, url: url, obj: obj, success: success, fail: fail }
+        ).dialog("open");
+    }
+    if (fail) fail(jqXHR, textStatus, errorThrown);
+  });
+}
+</script>
+  </body>
+</html>

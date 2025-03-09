@@ -1,0 +1,47 @@
+server {
+    listen {{ port_ }};
+  
+    server_name {{ host_name }} # for example: wapi.com *.wapi.com;
+
+    charset  utf-8;
+    access_log {{ path }}/log/nginx.access.log;
+    error_log  {{ path }}/log/nginx.error.log;
+
+    root {{ path }}/htdocs;
+
+    error_page 404 /404/?http_error_404;
+    error_page 500 502 /50x.html;
+
+    location ~* \.(jpg|jpeg|gif|png|css|js|json|txt|html|ico|swf|less|xlsx|ttf|woff|mp3)\.v.*$ {
+      rewrite ^(.*)\.v.*$ $1 break;
+    }
+
+    # static pages
+    location ~* ^/(home|admin)$ {
+        rewrite_log on;
+        rewrite ^(.*?)(\/)?$ $1.html break;
+    }
+
+    location / {
+        index home.html;
+    }
+
+    # rest api
+    location ~* ^/({{ apis | join('|') }}) {
+        rewrite_log on;
+
+        # Disable gzip (it makes scripts feel slower since they have to complete
+        # before getting gzipped)
+        gzip off;
+
+        # Fastcgi socket
+        fastcgi_pass  unix:/var/run/fcgiwrap.socket;
+
+        # Fastcgi parameters, include the standard ones
+        include /etc/nginx/fastcgi_params;
+
+        # Adjust non standard parameters (SCRIPT_FILENAME)
+        fastcgi_param SCRIPT_FILENAME {{ path }}/bin/route;
+    }
+}
+
