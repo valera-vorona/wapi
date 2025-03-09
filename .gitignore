@@ -3,3 +3,5 @@ etc/*.conf
 Conf.pm
 .log
 mods/user/
+.swp
+.bak

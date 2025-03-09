@@ -8,7 +8,7 @@
   <body>
     <div id="wrapper">
       <header>
-        header
+        Admin page
       </header>
       <div id="container">
         <aside>
@@ -25,11 +25,11 @@
           </nav>
         </aside>
         <main>
-          content
+          Loading ...
         </main>
       </div>
       <footer>
-        footer
+        Admin page
       </footer>
     </div>
     <div id="dialog-login" title="Login">
@@ -147,12 +147,16 @@ nav>div>a.active {
 </script>
 
 <script id="tmpl-users-details" type="text/x-handlebars-template">
+  <form id="form-users-details">
+  <p>User name: <b>{{ name }}</b></p>
   <table class="table table-striped">
+    <input type="hidden" name="user_id" value="{{ id }}">
     <tbody>
-      <tr><td>Name:</td><td>{{ name }}</td></tr>
-      <tr><td>Email:</td><td>{{ email }}</td></tr>
+      <tr><td>Name:</td><td><input type="text" name="name" data-init="{{ name }}" value="{{ name }}"></td></tr>
+      <tr><td>Email:</td><td><input type="email" name="email" data-init="{{ email }}" value="{{ email }}"</td></tr>
     </tbody>
   </table>
+  <p>Roles:</p>
   <table class="table table-striped">
     <thead>
       <tr>
@@ -164,11 +168,14 @@ nav>div>a.active {
     {{#each roles}}
       <tr>
         <td>{{ name }}</td>
-        <td>{{ granted }}</td>
+        <td><input type="checkbox" name="{{ name }}" data-init="{{ granted }}"{{#if granted }} checked{{/if}}></td>
       </tr>
     {{/each}}
     </tbody>
   </table>
+  <input type="submit">
+  <input type="reset">
+  </form>
 </script>
 
 <script id="tmpl-functions" type="text/x-handlebars-template">
@@ -299,6 +306,59 @@ $( document ).ready(function() {
       });
     });
 
+    $("body").on("submit", "#form-users-details", function(e) {
+      e.preventDefault();
+      let form = $(this);
+      let user_id = form.find("input[name=user_id]");
+      let name = form.find("input[name=name]");
+      let email = form.find("input[name=email]");
+      let args = {};
+
+      if ($(name).val() != $(name).data("init")) {
+        args["name"] = $(name).val();
+      }
+      if ($(email).val() != $(email).data("init")) {
+        args["email"] = $(email).val();
+      }
+
+      if (!$.isEmptyObject(args)) {
+        send("put", "/api/users/" + $(user_id).val(), args,
+        function() {
+
+        },
+        function(jqXHR, textStatus, errorThrown) {
+            form.trigger("reset");
+            alert(errorThrown);
+        });
+      }
+
+      $(this).find("input[type=checkbox]").each(function(e) {
+        if (this.checked != $(this).data("init")) {
+          if (this.checked) {
+            send("post", "/api/users/" + $(user_id).val() + "/roles/" + this.name, null,
+              function() {
+
+              },
+              function(jqXHR, textStatus, errorThrown) {
+                form.trigger("reset");
+                alert(errorThrown);
+              }
+            );
+          } else {
+            send("delete", "/api/users/" + $(user_id).val() + "/roles/" + this.name, null,
+              function() {
+
+              },
+              function(jqXHR, textStatus, errorThrown) {
+                form.trigger("reset");
+                alert(errorThrown);
+              }
+            );
+          }
+        }
+      });
+    });
+
     $("body").on("click", ".users .edit", function(e) {
       show_users_details($(this).data("id"));
     });
@@ -309,7 +369,7 @@ $( document ).ready(function() {
   });
 });
 
-function show_users(data) {
+function show_users() {
   send("get", "/api/users", null,
     function(data) {
       $("main").html(tmpls.users(data));
@@ -329,7 +389,7 @@ function show_users_details(id) {
     });
 }
 
-function show_functions(data) {
+function show_functions() {
   send("get", "/api/functions", null,
     function(data) {
       $("main").html(tmpls.functions(data));
@@ -339,7 +399,7 @@ function show_functions(data) {
     }); 
 }
 
-function show_roles(data) {
+function show_roles() {
   send("get", "/api/roles", null,
     function(data) {
       $("main").html(tmpls.roles(data));
