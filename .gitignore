@@ -1,5 +1,5 @@
-.conf
+all
+etc/*.conf
 Conf.pm
 .log
 mods/user/
-#mods/user
