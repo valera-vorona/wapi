@@ -119,6 +119,7 @@ insert into core.roles_functions (role_id, schema_name, function_name) values ((
 insert into core.roles_functions (role_id, schema_name, function_name) values ((select id from core.roles where name='admin'), 'api', 'delete_users');
 
 insert into core.roles_functions (role_id, schema_name, function_name) values ((select id from core.roles where name='admin'), 'api', 'get_roles');
+insert into core.roles_functions (role_id, schema_name, function_name) values ((select id from core.roles where name='admin'), 'api', 'get_roles_details');
 insert into core.roles_functions (role_id, schema_name, function_name) values ((select id from core.roles where name='admin'), 'api', 'post_roles');
 insert into core.roles_functions (role_id, schema_name, function_name) values ((select id from core.roles where name='admin'), 'api', 'delete_roles');
 

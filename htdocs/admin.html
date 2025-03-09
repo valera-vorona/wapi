@@ -136,7 +136,7 @@ nav>div>a.active {
       <tr>
         <td>{{ name }}</td>
         <td>{{ email }}</td>
-        <td class="buts">
+        <td class="buts users">
             <a href="#" title="Edit" class="edit" data-id="{{id}}"></a>
             <a href="#" title="Delete" class="del" data-id="{{id}}"></a>
         </td>
@@ -206,13 +206,36 @@ nav>div>a.active {
     {{#each this}}
       <tr>
         <td>{{ this }}</td>
-        <td>
-          <a href="#" class="class-thumb" data-id="{{id}}">
-            <img src="{{thumb_src}}">
-          </a>
+        <td class="buts roles">
+            <a href="#" title="Edit" class="edit" data-name="{{this}}"></a>
+            <a href="#" title="Delete" class="del" data-name="{{this}}"></a>
         </td>
       </tr>
      {{/each}}
+    </tbody>
+  </table>
+</script>
+
+<script id="tmpl-roles-details" type="text/x-handlebars-template">
+  <table class="table table-striped">
+    <tbody>
+      <tr><td>Name:</td><td>{{ name }}</td></tr>
+    </tbody>
+  </table>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Granted</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{#each functions}}
+      <tr>
+        <td>{{ name }}</td>
+        <td>{{ granted }}</td>
+      </tr>
+    {{/each}}
     </tbody>
   </table>
 </script>
@@ -228,6 +251,7 @@ $( document ).ready(function() {
       users_details: Handlebars.compile($("#tmpl-users-details").html()),
       functions:     Handlebars.compile($("#tmpl-functions").html()),
       roles:         Handlebars.compile($("#tmpl-roles").html()),
+      roles_details: Handlebars.compile($("#tmpl-roles-details").html()),
     };
 
     $("nav>div>a").on("click", function(e) {
@@ -275,8 +299,12 @@ $( document ).ready(function() {
       });
     });
 
-    $("body").on("click", ".edit", function(e) {
+    $("body").on("click", ".users .edit", function(e) {
       show_users_details($(this).data("id"));
+    });
+
+    $("body").on("click", ".roles .edit", function(e) {
+      show_roles_details($(this).data("name"));
     });
   });
 });
@@ -319,6 +347,16 @@ function show_roles(data) {
     function(e) {
 
     }); 
+}
+
+function show_roles_details(name) {
+  send("get", "/api/roles/" + name + "/details", null,
+    function(data) {
+      $("main").html(tmpls.roles_details(data));
+    },
+    function(e) {
+
+    });
 }
 
 function send(method, url, obj, success, fail) {

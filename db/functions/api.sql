@@ -48,8 +48,8 @@ AS $$
         'email', email,
         'roles', (
             select json_agg(
-              json_build_object('name', r.name, 'granted', 
-	        exists(select 1 from core.users_roles
+              json_build_object('name', r.name, 'granted',
+                  exists(select 1 from core.users_roles
                   where user_id=user_id_ and role_id=r.id and deleted is false
                 )
               )
@@ -170,6 +170,40 @@ AS $$
       select jsonb_agg(name) into rv
         from core.roles
         where deleted is false;
+
+    if rv is null then
+      raise exception '404 Not Found';
+    end if;
+
+    return rv;
+  end;
+$$;
+
+--drop function api.get_roles_details(bigint, text[], jsonb);
+create or replace function api.get_roles_details(bigint, params text[], jsonb)
+  returns jsonb
+  language plpgsql
+AS $$
+  declare
+    role_name text := params[1];
+    rv jsonb;
+
+  begin
+      select jsonb_build_object(
+        'name', r.name,
+        'functions', (
+            select json_agg(
+              json_build_object('name', f.name, 'granted',
+                  exists(select 1 from core.roles_functions
+                  where role_id=r.id and function_name=f.name and deleted is false
+                )
+              )
+            ) from core.functions f
+            where f.schema='api'
+          )
+        ) into rv
+        from core.roles r
+        where r.name=role_name and r.deleted is false;
 
     if rv is null then
       raise exception '404 Not Found';
