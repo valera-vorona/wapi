@@ -224,11 +224,14 @@ nav>div>a.active {
 </script>
 
 <script id="tmpl-roles-details" type="text/x-handlebars-template">
+  <form id="form-roles-details">
+  <p>Role name: <b>{{ name }}</b></p>
   <table class="table table-striped">
     <tbody>
-      <tr><td>Name:</td><td>{{ name }}</td></tr>
+      <tr><td>Name:</td><td><input type="text" name="name" data-init="{{ name }}" value="{{ name }}" disabled></td></tr>
     </tbody>
   </table>
+  <p>Functions:</p>
   <table class="table table-striped">
     <thead>
       <tr>
@@ -240,11 +243,14 @@ nav>div>a.active {
     {{#each functions}}
       <tr>
         <td>{{ name }}</td>
-        <td>{{ granted }}</td>
+        <td><input type="checkbox" name="{{ name }}" data-init="{{ granted }}"{{#if granted }} checked{{/if}}></td>
       </tr>
     {{/each}}
     </tbody>
   </table>
+  <input type="submit">
+  <input type="reset">
+  </form>
 </script>
 
 <script>
@@ -346,6 +352,38 @@ $( document ).ready(function() {
             );
           } else {
             send("delete", "/api/users/" + $(user_id).val() + "/roles/" + this.name, null,
+              function() {
+
+              },
+              function(jqXHR, textStatus, errorThrown) {
+                form.trigger("reset");
+                alert(errorThrown);
+              }
+            );
+          }
+        }
+      });
+    });
+
+    $("body").on("submit", "#form-roles-details", function(e) {
+      e.preventDefault();
+      let form = $(this);
+      let name = form.find("input[name=name]");
+
+      $(this).find("input[type=checkbox]").each(function(e) {
+        if (this.checked != $(this).data("init")) {
+          if (this.checked) {
+            send("post", "/api/roles/" + $(name).val() + "/functions/" + this.name, null,
+              function() {
+
+              },
+              function(jqXHR, textStatus, errorThrown) {
+                form.trigger("reset");
+                alert(errorThrown);
+              }
+            );
+          } else {
+            send("delete", "/api/roles/" + $(name).val() + "/functions/" + this.name, null,
               function() {
 
               },
