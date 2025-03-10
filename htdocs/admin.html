@@ -14,13 +14,16 @@
         <aside>
           <nav>
             <div>
-              <a id="menu-users" class="active" href="#">Users</a>
+              <span><a id="menu-users-add" href="#">+</a></span>
+              <span><a id="menu-users" class="active" href="#">Users</a></span>
             </div>
             <div>
-              <a id="menu-functions" href="#">Functions</a>
+              <span class="dummy"></span>
+              <span><a id="menu-functions" href="#">Functions</a></span>
             </div>
             <div>
-              <a id="menu-roles" href="#">Roles</a>
+              <span><a id="menu-roles-add" href="#">+</a></span>
+              <span><a id="menu-roles" href="#">Roles</a></span>
             </div>
           </nav>
         </aside>
@@ -88,20 +91,25 @@ nav {
   flex-direction: column;
 }
 nav>div {
+  display: flex;
+  flex-direction: row-reverse;
   height: 50px;
   text-align: center;
 }
-nav>div>a {
-  display: block;
-  color: black;
+.dummy {
   padding: 8px 16px;
+}
+nav>div a {
+  //display: block;
+  color: black;
+  padding: 16px 16px;
   text-decoration: none;
 }
-nav>div>a:hover {
+nav>div a:hover {
   background-color: #555;
   color: white;
 }
-nav>div>a.active {
+nav>div a.active {
   background-color: #04AA6D;
   color: white;
 }
@@ -114,13 +122,11 @@ nav>div>a.active {
   display: block;
   width: 16px;
   height: 16px;
-//  background-color: green;
 }
 .del {
   display: block;
   width: 16px;
   height: 16px;
-//  background-color: red;
 }
 </style>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -154,7 +160,14 @@ nav>div>a.active {
 
 <script id="tmpl-users-details" type="text/x-handlebars-template">
   <form id="form-users-details">
-  <p>User name: <b>{{ name }}</b></p>
+    <input type="hidden" name="user_id" value="{{ id }}">
+  {{#if name }}
+    <input type="hidden" name="method" value="put">
+    <p>Edit user: <b>{{ name }}</b></p>
+  {{else}}
+    <input type="hidden" name="method" value="post">
+    <p>Create a new user:</p>
+  {{/if}}
   <table class="table table-striped">
     <tbody>
       <tr><td>Name:</td><td><input type="text" name="name" data-init="{{ name }}" value="{{ name }}"></td></tr>
@@ -230,10 +243,16 @@ nav>div>a.active {
 
 <script id="tmpl-roles-details" type="text/x-handlebars-template">
   <form id="form-roles-details">
-  <p>Role name: <b>{{ name }}</b></p>
+  {{#if name }}
+    <input type="hidden" name="method" value="put">
+    <p>Role name: <b>{{ name }}</b></p>
+  {{else}}
+    <input type="hidden" name="method" value="post">
+    <p>Create a new role</p>
+  {{/if}}
   <table class="table table-striped">
     <tbody>
-      <tr><td>Name:</td><td><input type="text" name="name" data-init="{{ name }}" value="{{ name }}" disabled></td></tr>
+      <tr><td>Name:</td><td><input type="text" name="name" data-init="{{ name }}" value="{{ name }}"{{#if name }} disabled{{/if}}></td></tr>
     </tbody>
   </table>
   <p>Functions:</p>
@@ -272,17 +291,19 @@ $( document ).ready(function() {
       roles_details: Handlebars.compile($("#tmpl-roles-details").html()),
     };
 
-    $("nav>div>a").on("click", function(e) {
+    $("nav>div a").on("click", function(e) {
       e.preventDefault();
-      $("nav>div>a").removeClass("active");
+      $("nav>div a").removeClass("active");
       $(this).addClass("active");
     });
 
     $("#menu-users").on("click", show_users);
+    $("#menu-users-add").on("click", show_users_add);
     $("#menu-functions").on("click", show_functions);
     $("#menu-roles").on("click", show_roles);
+    $("#menu-roles-add").on("click", show_roles_add);
 
-    $("nav>div>a.active").trigger("click");
+    $("nav>div a.active").trigger("click");
 
     $("#dialog-login,#dialog-confirm").dialog({
       autoOpen : false,
@@ -320,7 +341,8 @@ $( document ).ready(function() {
     $("body").on("submit", "#form-users-details", function(e) {
       e.preventDefault();
       let form = $(this);
-      let user_id = form.find("input[name=user_id]");
+      let method = $(form.find("input[name=method]")).val();
+      let user_id = $(form.find("input[name=user_id]")).val();
       let name = form.find("input[name=name]");
       let email = form.find("input[name=email]");
       let args = {};
@@ -328,69 +350,57 @@ $( document ).ready(function() {
       if ($(name).val() != $(name).data("init")) {
         args["name"] = $(name).val();
       }
-      if ($(email).val() != $(email).data("init")) {
+      if (email != $(email).data("init")) {
         args["email"] = $(email).val();
       }
 
-      if (!$.isEmptyObject(args)) {
-        send("put", "/api/users/" + $(user_id).val(), args,
-        function() {
-
+      if ($.isEmptyObject(args)) {
+        if (method == "put" && user_id) {
+          post_users_roles(form, user_id);
+        }
+      } else {
+        let url = (method == "post") ? "/api/users" : "/api/users/" + user_id;
+        send(method, url, args,
+        function(data) {
+          if (method == "post" && "iid" in data) {
+            user_id = data.iid;
+          }
+          post_users_roles(form, user_id);
         },
         function(jqXHR, textStatus, errorThrown) {
             form.trigger("reset");
             alert(errorThrown);
         });
       }
-
-      $(this).find("input[type=checkbox]").each(function(e) {
-        if (this.checked != $(this).data("init")) {
-          if (this.checked) {
-            send("post", "/api/users/" + $(user_id).val() + "/roles/" + this.name, null,
-              function() {
-
-              },
-              function(jqXHR, textStatus, errorThrown) {
-                form.trigger("reset");
-                alert(errorThrown);
-              }
-            );
-          } else {
-            send("delete", "/api/users/" + $(user_id).val() + "/roles/" + this.name, null,
-              function() {
-
-              },
-              function(jqXHR, textStatus, errorThrown) {
-                form.trigger("reset");
-                alert(errorThrown);
-              }
-            );
-          }
-        }
-      });
     });
 
     $("body").on("submit", "#form-roles-details", function(e) {
       e.preventDefault();
       let form = $(this);
+      let method = $(form.find("input[name=method]")).val();
       let name = form.find("input[name=name]");
+      let args = {};
 
-      $(this).find("input[type=checkbox]").each(function(e) {
-        if (this.checked != $(this).data("init")) {
-          if (this.checked) {
-            send("post", "/api/roles/" + $(name).val() + "/functions/" + this.name, null,
-              function() {
+      if ($(name).val() != $(name).data("init")) {
+        args["name"] = $(name).val();
+      }
 
-              },
-              function(jqXHR, textStatus, errorThrown) {
-                form.trigger("reset");
-                alert(errorThrown);
-              }
-            );
+      if ($.isEmptyObject(args)) {
+        if (method == "put") {
+          post_roles_functions(form, $(name).val());
+        } else {
+          alert("Role name is mandatory");
+        }
+      } else {
+        if (method == "put") {
+          post_roles_functions(form, $(name).val());
+        } else {
+          if ($(name).val().length == 0) {
+            alert("Role name is mandatory");
           } else {
-            send("delete", "/api/roles/" + $(name).val() + "/functions/" + this.name, null,
+            send("post", "/api/roles/", args,
               function() {
-
+                post_roles_functions(form, $(name).val());
               },
               function(jqXHR, textStatus, errorThrown) {
                 form.trigger("reset");
@@ -399,7 +409,7 @@ $( document ).ready(function() {
             );
           }
         }
-      });
+      }
     });
 
     $("body").on("click", ".users .edit", function(e) {
@@ -467,6 +477,23 @@ function show_users_details(id) {
     });
 }
 
+function show_users_add(id) {
+  send("get", "/api/roles", null,
+    function(data) {
+      let roles = [];
+      for(let i in data) {
+        roles.push({ name: data[i], granted: false });
+      }
+      $("main").html(tmpls.users_details({
+        roles: roles
+        })
+      );
+    },
+    function(e) {
+
+    });
+}
+
 function show_functions() {
   send("get", "/api/functions", null,
     function(data) {
@@ -495,6 +522,79 @@ function show_roles_details(name) {
     function(e) {
 
     });
+}
+
+function show_roles_add(id) {
+  send("get", "/api/functions", null,
+    function(data) {
+      let functions = [];
+      for(let i in data) {
+        functions.push({ name: data[i], granted: false });
+      }
+      $("main").html(tmpls.roles_details({
+        functions: functions
+        })
+      );
+    },
+    function(e) {
+
+    });
+}
+
+function post_users_roles(form, user_id) {
+      form.find("input[type=checkbox]").each(function(e) {
+        if (this.checked != $(this).data("init")) {
+          if (this.checked) {
+            send("post", "/api/users/" + user_id + "/roles/" + this.name, null,
+              function() {
+
+              },
+              function(jqXHR, textStatus, errorThrown) {
+                form.trigger("reset");
+                alert(errorThrown);
+              }
+            );
+          } else {
+            send("delete", "/api/users/" + user_id + "/roles/" + this.name, null,
+              function() {
+
+              },
+              function(jqXHR, textStatus, errorThrown) {
+                form.trigger("reset");
+                alert(errorThrown);
+              }
+            );
+          }
+        }
+      });
+}
+
+function post_roles_functions(form, name) {
+  form.find("input[type=checkbox]").each(function(e) {
+    if (this.checked != $(this).data("init")) {
+      if (this.checked) {
+        send("post", "/api/roles/" + name + "/functions/" + this.name, null,
+          function() {
+
+          },
+          function(jqXHR, textStatus, errorThrown) {
+            form.trigger("reset");
+            alert(errorThrown);
+          }
+        );
+      } else {
+        send("delete", "/api/roles/" + name + "/functions/" + this.name, null,
+          function() {
+
+          },
+          function(jqXHR, textStatus, errorThrown) {
+            form.trigger("reset");
+            alert(errorThrown);
+          }
+        );
+      }
+    }
+  });
 }
 
 function dialog_confirm(message, yes, no) {
