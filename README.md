@@ -1,6 +1,9 @@
 # wapi
 REST API Scriptless Web Framework
 
+### You may need to preinstall (Debian/Ubuntu):
+sudo apt install postgresql ansible fcgiwrap libcgi-pm-perl libdbd-pg-perl
+
 ## How to install
 - Clone this repo where you want (example on linux: /opt/www)
 - cd INSTALLATION_PATH/ansible/group_vars
@@ -14,4 +17,4 @@ REST API Scriptless Web Framework
 - cd ../sites-enabled
 - sudo ln -s ../YOUR_PROJECT_NAME.nginx.conf
 - sudo service nginx restart
-- In browser check YOUR_SITE/admin
+- In browser check YOUR_SITE/admin, login: root, password: root, change in soon after your first login.
