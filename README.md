@@ -2,7 +2,7 @@
 REST API Scriptless Web Framework
 
 ### You may need to preinstall (Debian/Ubuntu):
-sudo apt install postgresql ansible fcgiwrap libcgi-pm-perl libdbd-pg-perl
+sudo apt install nginx postgresql ansible fcgiwrap libcgi-pm-perl libdbd-pg-perl
 
 ## How to install
 - Clone this repo where you want (example on linux: /opt/www)
